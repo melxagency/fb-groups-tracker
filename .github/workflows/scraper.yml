@@ -2,8 +2,8 @@ name: Facebook Groups Scraper
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Diario a las 6:00 AM UTC
-  workflow_dispatch:       # Permite ejecutar manualmente desde GitHub
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   scraper:
@@ -41,6 +41,13 @@ jobs:
           FB_PASSWORD: ${{ secrets.FB_PASSWORD }}
           GITHUB_ACTIONS: true
         run: python scraper.py
+
+      - name: Subir screenshots de debug
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots
+          path: debug/
 
       - name: Notificar si falla
         if: failure()
