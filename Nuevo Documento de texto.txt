@@ -1,0 +1,203 @@
+a class=x1i10hfl xjbqb8w x1ejq31n x18oe1m7 x1sy0etr xstzfhl x972fbf x10w94by x1qhh985 x14e42zd x9f619 x1ypdohk xt0psk2 x3ct3a4 xdj266r x14z9mp xat24cr x1lziwak xexx8yu xyri2b x18d9i69 x1c1uobl x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz xkrqix3 x1sur9pj xi81zsa x1s688f href=groups24406799275630708members role=link tabindex=067,0&nbsp;mil miembrosa
+
+
+
+
+import undetected_chromedriver as uc
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from supabase import create_client
+from dotenv import load_dotenv
+import os
+import time
+import re
+import json
+
+load_dotenv()
+
+# Supabase client
+supabase = create_client(
+    os.getenv('SUPABASE_URL'),
+    os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+)
+
+COOKIES_FILE = os.path.abspath(os.path.join('Cookies', 'facebook_cookies.json'))
+
+def save_cookies(driver):
+    os.makedirs('test', exist_ok=True)
+    cookies = driver.get_cookies()
+    with open(COOKIES_FILE, 'w') as f:
+        json.dump(cookies, f, indent=2)
+    print('✅ Cookies guardadas en carpeta test')
+
+def load_cookies(driver):
+    if not os.path.exists(COOKIES_FILE):
+        print('No hay cookies guardadas')
+        return False
+    
+    # Primero ir a Facebook para establecer el dominio
+    driver.get('https://www.facebook.com/')
+    time.sleep(3)
+    
+    with open(COOKIES_FILE, 'r') as f:
+        cookies = json.load(f)
+    
+    for cookie in cookies:
+        cookie.pop('sameSite', None)
+        cookie.pop('expiry', None)  # ← esto causa problemas a veces
+        try:
+            driver.add_cookie(cookie)
+        except Exception as e:
+            pass
+    
+    # Refrescar para aplicar cookies
+    driver.refresh()
+    time.sleep(5)
+    
+    print(f'✅ {len(cookies)} cookies cargadas')
+    return True
+
+def is_logged_in(driver):
+    return 'login' not in driver.current_url and 'checkpoint' not in driver.current_url
+
+def parse_members(text):
+    """Convierte '113,6 mil' → 113600"""
+    text = text.lower().strip()
+    match = re.search(r'([\d,.]+)\s*(mil)?', text)
+    if not match:
+        return None
+    num = float(match.group(1).replace(',', '.'))
+    if match.group(2):
+        num *= 1000
+    return round(num)
+
+def get_member_count(driver, group_url):
+    try:
+        driver.get(group_url)
+        time.sleep(4)
+        elements = driver.find_elements(By.XPATH, '//*[contains(text(), "miembros") or contains(text(), "members")]')
+        for el in elements:
+            text = el.text.strip()
+            if re.search(r'[\d,.]+\s*(mil\s*)?(miembros|members)', text, re.IGNORECASE):
+                count = parse_members(text)
+                if count:
+                    return count
+        return None
+    except Exception as e:
+        print(f'  Error en {group_url}: {e}')
+        return None
+
+def main():
+    # Obtener grupos de Supabase
+    response = supabase.table('facebook_groups').select('id, nombre, link').execute()
+    grupos = response.data
+    print(f'Grupos encontrados: {len(grupos)}')
+
+    # Configurar Chrome con undetected-chromedriver
+    options = uc.ChromeOptions()
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--lang=es-ES')
+
+    driver = uc.Chrome(options=options)
+    wait = WebDriverWait(driver, 15)
+
+    try:
+        # ── INTENTAR CARGAR COOKIES ──────────────────────
+        print('Verificando sesión guardada...')
+        cookies_cargadas = load_cookies(driver)
+
+        if cookies_cargadas and is_logged_in(driver):
+            print('✅ Sesión restaurada desde cookies')
+        else:
+            # ── LOGIN MANUAL ─────────────────────────────
+            print('Iniciando sesión en Facebook...')
+            driver.get('https://www.facebook.com/')
+            time.sleep(3)
+
+            # Aceptar cookies si aparece
+            try:
+                cookie_btn = driver.find_element(By.XPATH, '//*[@data-cookiebanner="accept_button"]')
+                cookie_btn.click()
+                time.sleep(2)
+            except:
+                pass
+
+            # Email
+            email_element = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@name="email"]')))
+            email_element.click()
+            email_element.send_keys(os.getenv('FB_EMAIL'))
+            time.sleep(1)
+
+            # Password
+            pass_element = driver.find_element(By.XPATH, '//*[@name="pass"]')
+            pass_element.click()
+            pass_element.send_keys(os.getenv('FB_PASSWORD'))
+            time.sleep(1)
+
+            # Login button
+            login_element = driver.find_element(By.XPATH, '//*[@class="x1i10hfl xjbqb8w x1ejq31n x18oe1m7 x1sy0etr xstzfhl x972fbf x10w94by x1qhh985 x14e42zd x1ypdohk x3ct3a4 xdj266r x14z9mp xat24cr x1lziwak xexx8yu xyri2b x18d9i69 x1c1uobl x16tdsg8 x1hl2dhg xggy1nq x1fmog5m xu25z0z x140muxe xo1y3bh x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3"]')
+            login_element.click()
+
+            # Esperar 2FA si es necesario
+            print('⏳ Esperando login y 2FA (tienes 30 segundos)...')
+            time.sleep(120)
+
+            if not is_logged_in(driver):
+                print('❌ Login fallido o requiere verificación adicional')
+                return
+
+            print('✅ Login exitoso')
+
+            # Guardar cookies para próximas ejecuciones
+            save_cookies(driver)
+
+        # ── SCRAPING ─────────────────────────────────────
+        print(f'\nProcesando {len(grupos)} grupos...\n')
+        resultados = []
+
+        for grupo in grupos:
+            print(f'Scraping: {grupo["nombre"]}')
+            miembros = get_member_count(driver, grupo['link'])
+
+            if miembros:
+                supabase.table('facebook_groups')\
+                    .update({'miembros_actuales': miembros})\
+                    .eq('id', grupo['id'])\
+                    .execute()
+                print(f'  ✅ {miembros:,} miembros')
+                resultados.append({'nombre': grupo['nombre'], 'miembros': miembros, 'ok': True})
+            else:
+                print(f'  ⚠️ No se pudo obtener miembros')
+                resultados.append({'nombre': grupo['nombre'], 'miembros': None, 'ok': False})
+
+            time.sleep(2)
+
+    finally:
+        driver.quit()
+
+    # ── RESUMEN ───────────────────────────────────────────
+    exitosos = len([r for r in resultados if r['ok']])
+    fallidos = len([r for r in resultados if not r['ok']])
+    print(f'\n══════════════════════════════')
+    print(f'RESUMEN FINAL')
+    print(f'══════════════════════════════')
+    print(f'✅ Exitosos: {exitosos}')
+    print(f'❌ Fallidos: {fallidos}')
+    print(f'══════════════════════════════')
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+
+
+
+
+
+
+
+    

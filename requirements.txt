@@ -1,0 +1,6 @@
+selenium
+undetected-chromedriver
+supabase
+python-dotenv
+webdriver-manager
+setuptools
