@@ -1,10 +1,25 @@
-- name: Setup Python
-  uses: actions/setup-python@v5
-  with:
-    python-version: "3.11"
+name: Run FB Groups Tracker
 
-- name: Install dependencies
-  run: pip install -r requirements.txt
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
 
-- name: Run script
-  run: python main.py
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run script
+        run: node index.js
