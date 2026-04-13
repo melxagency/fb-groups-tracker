@@ -1,0 +1,47 @@
+name: Facebook Groups Scraper
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Diario a las 6:00 AM UTC
+  workflow_dispatch:       # Permite ejecutar manualmente desde GitHub
+
+jobs:
+  scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Instalar Chrome
+        run: |
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Instalar dependencias Python
+        run: pip install -r requirements.txt
+
+      - name: Crear archivo de cookies
+        run: |
+          mkdir -p cookies
+          echo '${{ secrets.FB_COOKIES }}' > cookies/facebook_cookies.json
+
+      - name: Ejecutar scraper
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FB_EMAIL: ${{ secrets.FB_EMAIL }}
+          FB_PASSWORD: ${{ secrets.FB_PASSWORD }}
+          GITHUB_ACTIONS: true
+        run: python scraper.py
+
+      - name: Notificar si falla
+        if: failure()
+        run: echo "❌ El scraper falló - puede que las cookies hayan expirado. Ejecuta login.py localmente y actualiza el secret FB_COOKIES"
