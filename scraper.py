@@ -46,6 +46,24 @@ def load_cookies(driver):
     time.sleep(5)
     return True
 
+# Hacer clic en "Continue" si aparece pantalla de selección de perfil
+        try:
+            continue_btn = driver.find_element(By.XPATH, '//div[@role="button" and contains(text(), "Continue")]')
+            continue_btn.click()
+            print('✅ Clic en Continue')
+            time.sleep(5)
+        except:
+            pass
+
+        # También intentar con el texto en español
+        try:
+            continue_btn = driver.find_element(By.XPATH, '//div[@role="button" and contains(text(), "Continuar")]')
+            continue_btn.click()
+            print('✅ Clic en Continuar')
+            time.sleep(5)
+        except:
+            pass
+
 def is_logged_in(driver):
     return 'login' not in driver.current_url and 'checkpoint' not in driver.current_url
 
