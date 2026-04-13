@@ -59,10 +59,20 @@ def parse_members(text):
         num *= 1000
     return round(num)
 
-def get_member_count(driver, group_url):
+def get_member_count(driver, group_url, nombre='grupo'):
     try:
         driver.get(group_url)
         time.sleep(6)
+
+        # Guardar screenshot para debug
+        en_github = os.getenv('GITHUB_ACTIONS') == 'true'
+        if en_github:
+            os.makedirs('debug', exist_ok=True)
+            nombre_limpio = re.sub(r'[^\w]', '_', nombre)[:30]
+            driver.save_screenshot(f'debug/{nombre_limpio}.png')
+            with open(f'debug/{nombre_limpio}.html', 'w', encoding='utf-8') as f:
+                f.write(driver.page_source)
+
         elements = driver.find_elements(
             By.XPATH,
             '//*[contains(text(), "miembros") or contains(text(), "members")]'
