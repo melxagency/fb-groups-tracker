@@ -26,7 +26,6 @@ def load_cookies(driver):
     with open(COOKIES_FILE, 'r') as f:
         cookies = json.load(f)
 
-    # Ir a Facebook para establecer dominio
     driver.get('https://www.facebook.com/')
     time.sleep(5)
 
@@ -41,28 +40,27 @@ def load_cookies(driver):
 
     print(f'✅ {len(cookies)} cookies cargadas')
 
-    # Recargar para aplicar cookies
     driver.get('https://www.facebook.com/')
     time.sleep(5)
+
+    # Hacer clic en Continue/Continuar si aparece pantalla de selección de perfil
+    try:
+        continue_btn = driver.find_element(By.XPATH, '//div[@role="button" and contains(text(), "Continue")]')
+        continue_btn.click()
+        print('✅ Clic en Continue')
+        time.sleep(5)
+    except:
+        pass
+
+    try:
+        continue_btn = driver.find_element(By.XPATH, '//div[@role="button" and contains(text(), "Continuar")]')
+        continue_btn.click()
+        print('✅ Clic en Continuar')
+        time.sleep(5)
+    except:
+        pass
+
     return True
-
-# Hacer clic en "Continue" si aparece pantalla de selección de perfil
-        try:
-            continue_btn = driver.find_element(By.XPATH, '//div[@role="button" and contains(text(), "Continue")]')
-            continue_btn.click()
-            print('✅ Clic en Continue')
-            time.sleep(5)
-        except:
-            pass
-
-        # También intentar con el texto en español
-        try:
-            continue_btn = driver.find_element(By.XPATH, '//div[@role="button" and contains(text(), "Continuar")]')
-            continue_btn.click()
-            print('✅ Clic en Continuar')
-            time.sleep(5)
-        except:
-            pass
 
 def is_logged_in(driver):
     return 'login' not in driver.current_url and 'checkpoint' not in driver.current_url
@@ -82,7 +80,6 @@ def get_member_count(driver, group_url, nombre='grupo'):
         driver.get(group_url)
         time.sleep(6)
 
-        # Guardar screenshot para debug
         en_github = os.getenv('GITHUB_ACTIONS') == 'true'
         if en_github:
             os.makedirs('debug', exist_ok=True)
@@ -111,7 +108,6 @@ def main():
     grupos = response.data
     print(f'Grupos encontrados: {len(grupos)}')
 
-    # Detectar si estamos en GitHub Actions
     en_github = os.getenv('GITHUB_ACTIONS') == 'true'
 
     options = uc.ChromeOptions()
@@ -142,13 +138,12 @@ def main():
 
         print('✅ Sesión activa')
 
-        # SCRAPING
         print(f'\nProcesando {len(grupos)} grupos...\n')
         resultados = []
 
         for grupo in grupos:
             print(f'Scraping: {grupo["nombre"]}')
-            miembros = get_member_count(driver, grupo['link'])
+            miembros = get_member_count(driver, grupo['link'], grupo['nombre'])
 
             if miembros:
                 supabase.table('facebook_groups')\
@@ -175,7 +170,6 @@ def main():
     print(f'❌ Fallidos: {fallidos}')
     print(f'══════════════════════════════')
 
-    # Fallar el workflow si todos fallaron
     if exitosos == 0:
         exit(1)
 
