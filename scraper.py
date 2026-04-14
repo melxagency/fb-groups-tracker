@@ -41,10 +41,6 @@ def load_cookies(driver):
     driver.get('https://www.facebook.com/')
     time.sleep(5)
 
-    # Clic en Continue/Continuar si aparece pantalla de selección de perfil
-   # Clic en Continue - múltiples estrategias
-    time.sleep(3)
-    
     # Estrategia 1: por texto exacto en cualquier elemento clickeable
     for xpath in [
         '//*[text()="Continue"]',
@@ -77,6 +73,8 @@ def load_cookies(driver):
         time.sleep(5)
     except:
         pass
+
+    return True
 
 def is_logged_in(driver):
     return 'login' not in driver.current_url and 'checkpoint' not in driver.current_url
