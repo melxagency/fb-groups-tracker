@@ -29,6 +29,24 @@ def click_continue_if_present(driver):
     except:
         return False
 
+def handle_password_modal(driver):
+    try:
+        pwd_input = driver.find_element(By.XPATH, '//input[@type="password"]')
+        pwd_input.click()
+        time.sleep(1)
+        pwd_input.send_keys(os.getenv('FB_PASSWORD'))
+        time.sleep(1)
+        try:
+            login_btn = driver.find_element(By.XPATH, '//button[@type="submit"]')
+        except:
+            login_btn = driver.find_element(By.XPATH, '//button[contains(text(),"Log in")]')
+        login_btn.click()
+        print('  ✅ Password ingresado en modal')
+        time.sleep(7)
+        return True
+    except:
+        return False
+
 def load_cookies(driver):
     if not os.path.exists(COOKIES_FILE):
         print('❌ No hay cookies - ejecuta login.py primero')
@@ -54,10 +72,15 @@ def load_cookies(driver):
     print(f'✅ {len(cookies)} cookies cargadas')
 
     print('Recargando con cookies...')
-    driver.get('https://www.facebook.com/')
-    time.sleep(5)
+    driver.get('https://www.facebook.com/?sk=h_chr')
+    time.sleep(6)
     print(f'URL después de cookies: {driver.current_url}')
 
+    # Manejar modal de password si aparece
+    if handle_password_modal(driver):
+        print('✅ Modal de password manejado')
+
+    # Manejar botón Continue si aparece
     click_continue_if_present(driver)
 
     print(f'URL final load_cookies: {driver.current_url}')
@@ -81,7 +104,10 @@ def get_member_count(driver, group_url, nombre='grupo'):
         driver.get(group_url)
         time.sleep(6)
 
-        # Hacer clic en Continue si aparece al navegar al grupo
+        # Manejar modal de password si aparece
+        handle_password_modal(driver)
+
+        # Manejar botón Continue si aparece
         click_continue_if_present(driver)
         time.sleep(3)
 
