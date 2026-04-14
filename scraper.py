@@ -32,15 +32,17 @@ def click_continue_if_present(driver):
 
 def handle_password_modal(driver):
     try:
-        pwd_input = driver.find_element(By.XPATH, PASSWORD_INPUT_XPATH)
+        wait = WebDriverWait(driver, 8)
+        pwd_input = wait.until(EC.presence_of_element_located((By.XPATH, PASSWORD_INPUT_XPATH)))
+        time.sleep(1)
         pwd_input.click()
         time.sleep(1)
         pwd_input.send_keys(os.getenv('FB_PASSWORD'))
         time.sleep(1)
-        # Usar misma clase del botón Continue para el botón Log in
+        print('  ✅ Password escrito')
         login_btn = driver.find_element(By.XPATH, CONTINUE_BTN_XPATH)
         login_btn.click()
-        print('  ✅ Password ingresado en modal')
+        print('  ✅ Clic en Log in del modal')
         time.sleep(7)
         return True
     except:
@@ -75,11 +77,9 @@ def load_cookies(driver):
     time.sleep(6)
     print(f'URL después de cookies: {driver.current_url}')
 
-    # Manejar modal de password si aparece
     if handle_password_modal(driver):
         print('✅ Modal de password manejado')
 
-    # Manejar botón Continue si aparece
     click_continue_if_present(driver)
 
     print(f'URL final load_cookies: {driver.current_url}')
@@ -103,10 +103,7 @@ def get_member_count(driver, group_url, nombre='grupo'):
         driver.get(group_url)
         time.sleep(6)
 
-        # Manejar modal de password si aparece
         handle_password_modal(driver)
-
-        # Manejar botón Continue si aparece
         click_continue_if_present(driver)
         time.sleep(3)
 
