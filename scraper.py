@@ -24,8 +24,10 @@ def load_cookies(driver):
     with open(COOKIES_FILE, 'r') as f:
         cookies = json.load(f)
 
+    print('Navegando a Facebook...')
     driver.get('https://www.facebook.com/')
     time.sleep(5)
+    print(f'URL inicial: {driver.current_url}')
 
     for cookie in cookies:
         cookie.pop('sameSite', None)
@@ -38,13 +40,38 @@ def load_cookies(driver):
 
     print(f'✅ {len(cookies)} cookies cargadas')
 
+    print('Recargando con cookies...')
     driver.get('https://www.facebook.com/')
     time.sleep(5)
+    print(f'URL después de cookies: {driver.current_url}')
 
-    # Estrategia 1: por texto exacto en cualquier elemento clickeable
-    btn = driver.find_element(By.XPATH, '//*[@class="x1i10hfl xjbqb8w x1ejq31n x18oe1m7 x1sy0etr xstzfhl x972fbf x10w94by x1qhh985 x14e42zd x1ypdohk x3ct3a4 xdj266r x14z9mp xat24cr x1lziwak xexx8yu xyri2b x18d9i69 x1c1uobl x16tdsg8 x1hl2dhg xggy1nq x1fmog5m xu25z0z x140muxe xo1y3bh x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3"]')
-    btn.click()
-          
+    # Intentar clic en botón Continue por clase
+    try:
+        btn = driver.find_element(By.XPATH, '//*[@class="x1i10hfl xjbqb8w x1ejq31n x18oe1m7 x1sy0etr xstzfhl x972fbf x10w94by x1qhh985 x14e42zd x1ypdohk x3ct3a4 xdj266r x14z9mp xat24cr x1lziwak xexx8yu xyri2b x18d9i69 x1c1uobl x16tdsg8 x1hl2dhg xggy1nq x1fmog5m xu25z0z x140muxe xo1y3bh x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3"]')
+        btn.click()
+        print('✅ Clic en botón Continue (por clase)')
+        time.sleep(5)
+        print(f'URL después de Continue: {driver.current_url}')
+    except:
+        print('⚠️ Botón Continue no encontrado por clase, intentando JavaScript...')
+        try:
+            driver.execute_script("""
+                const elements = document.querySelectorAll('*');
+                for (const el of elements) {
+                    if (el.innerText === 'Continue' || el.innerText === 'Continuar') {
+                        el.click();
+                        break;
+                    }
+                }
+            """)
+            print('✅ Clic via JavaScript')
+            time.sleep(5)
+            print(f'URL después de JS: {driver.current_url}')
+        except Exception as e:
+            print(f'⚠️ JavaScript también falló: {e}')
+
+    print(f'URL final load_cookies: {driver.current_url}')
+    return True
 
 def is_logged_in(driver):
     return 'login' not in driver.current_url and 'checkpoint' not in driver.current_url
