@@ -1,7 +1,5 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from supabase import create_client
 from dotenv import load_dotenv
 import os
@@ -43,7 +41,7 @@ def load_cookies(driver):
     driver.get('https://www.facebook.com/')
     time.sleep(5)
 
-    # Hacer clic en Continue/Continuar si aparece pantalla de selección de perfil
+    # Clic en Continue/Continuar si aparece pantalla de selección de perfil
     try:
         continue_btn = driver.find_element(By.XPATH, '//div[@role="button" and contains(text(), "Continue")]')
         continue_btn.click()
@@ -109,6 +107,7 @@ def main():
     print(f'Grupos encontrados: {len(grupos)}')
 
     en_github = os.getenv('GITHUB_ACTIONS') == 'true'
+    chrome_path = os.getenv('CHROME_PATH', None)
 
     options = uc.ChromeOptions()
     options.add_argument('--no-sandbox')
@@ -123,7 +122,11 @@ def main():
     else:
         print('💻 Modo local (con ventana)')
 
-    driver = uc.Chrome(options=options, use_subprocess=True)
+    driver = uc.Chrome(
+        options=options,
+        use_subprocess=True,
+        browser_executable_path=chrome_path
+    )
 
     try:
         print('Cargando cookies...')
