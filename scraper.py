@@ -42,23 +42,41 @@ def load_cookies(driver):
     time.sleep(5)
 
     # Clic en Continue/Continuar si aparece pantalla de selección de perfil
+   # Clic en Continue - múltiples estrategias
+    time.sleep(3)
+    
+    # Estrategia 1: por texto exacto en cualquier elemento clickeable
+    for xpath in [
+        '//*[text()="Continue"]',
+        '//*[text()="Continuar"]',
+        '//input[@value="Continue"]',
+        '//button[contains(text(),"Continue")]',
+        '//a[contains(text(),"Continue")]',
+    ]:
+        try:
+            btn = driver.find_element(By.XPATH, xpath)
+            btn.click()
+            print(f'✅ Clic en Continue ({xpath})')
+            time.sleep(5)
+            break
+        except:
+            continue
+
+    # Estrategia 2: JavaScript directo si todo falla
     try:
-        continue_btn = driver.find_element(By.XPATH, '//div[@role="button" and contains(text(), "Continue")]')
-        continue_btn.click()
-        print('✅ Clic en Continue')
+        driver.execute_script("""
+            const elements = document.querySelectorAll('*');
+            for (const el of elements) {
+                if (el.innerText === 'Continue' || el.innerText === 'Continuar') {
+                    el.click();
+                    break;
+                }
+            }
+        """)
+        print('✅ Clic via JavaScript')
         time.sleep(5)
     except:
         pass
-
-    try:
-        continue_btn = driver.find_element(By.XPATH, '//div[@role="button" and contains(text(), "Continuar")]')
-        continue_btn.click()
-        print('✅ Clic en Continuar')
-        time.sleep(5)
-    except:
-        pass
-
-    return True
 
 def is_logged_in(driver):
     return 'login' not in driver.current_url and 'checkpoint' not in driver.current_url
