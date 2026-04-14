@@ -17,6 +17,17 @@ supabase = create_client(
 )
 
 COOKIES_FILE = os.path.abspath(os.path.join('cookies', 'facebook_cookies.json'))
+CONTINUE_BTN_XPATH = '//*[@class="x1i10hfl xjbqb8w x1ejq31n x18oe1m7 x1sy0etr xstzfhl x972fbf x10w94by x1qhh985 x14e42zd x1ypdohk x3ct3a4 xdj266r x14z9mp xat24cr x1lziwak xexx8yu xyri2b x18d9i69 x1c1uobl x16tdsg8 x1hl2dhg xggy1nq x1fmog5m xu25z0z x140muxe xo1y3bh x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3"]'
+
+def click_continue_if_present(driver):
+    try:
+        btn = driver.find_element(By.XPATH, CONTINUE_BTN_XPATH)
+        btn.click()
+        print('  ✅ Clic en Continue')
+        time.sleep(4)
+        return True
+    except:
+        return False
 
 def load_cookies(driver):
     if not os.path.exists(COOKIES_FILE):
@@ -47,34 +58,7 @@ def load_cookies(driver):
     time.sleep(5)
     print(f'URL después de cookies: {driver.current_url}')
 
-    # Clic en Continue por clase
-    try:
-        btn = driver.find_element(By.XPATH, '//*[@class="x1i10hfl xjbqb8w x1ejq31n x18oe1m7 x1sy0etr xstzfhl x972fbf x10w94by x1qhh985 x14e42zd x1ypdohk x3ct3a4 xdj266r x14z9mp xat24cr x1lziwak xexx8yu xyri2b x18d9i69 x1c1uobl x16tdsg8 x1hl2dhg xggy1nq x1fmog5m xu25z0z x140muxe xo1y3bh x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3"]')
-        btn.click()
-        print('✅ Clic en botón Continue (por clase)')
-        time.sleep(5)
-        print(f'URL después de Continue: {driver.current_url}')
-    except:
-        print('⚠️ Botón Continue no encontrado por clase, intentando JavaScript...')
-        try:
-            for _ in range(5):
-                resultado = driver.execute_script("""
-                    const elements = document.querySelectorAll('*');
-                    for (const el of elements) {
-                        if (el.innerText && (el.innerText.trim() === 'Continue' || el.innerText.trim() === 'Continuar')) {
-                            el.click();
-                            return true;
-                        }
-                    }
-                    return false;
-                """)
-                if resultado:
-                    print('✅ Clic via JavaScript')
-                    time.sleep(5)
-                    break
-                time.sleep(2)
-        except Exception as e:
-            print(f'⚠️ JavaScript también falló: {e}')
+    click_continue_if_present(driver)
 
     print(f'URL final load_cookies: {driver.current_url}')
     return True
@@ -96,6 +80,10 @@ def get_member_count(driver, group_url, nombre='grupo'):
     try:
         driver.get(group_url)
         time.sleep(6)
+
+        # Hacer clic en Continue si aparece al navegar al grupo
+        click_continue_if_present(driver)
+        time.sleep(3)
 
         en_github = os.getenv('GITHUB_ACTIONS') == 'true'
         if en_github:
