@@ -18,6 +18,7 @@ supabase = create_client(
 
 COOKIES_FILE = os.path.abspath(os.path.join('cookies', 'facebook_cookies.json'))
 CONTINUE_BTN_XPATH = '//*[@class="x1i10hfl xjbqb8w x1ejq31n x18oe1m7 x1sy0etr xstzfhl x972fbf x10w94by x1qhh985 x14e42zd x1ypdohk x3ct3a4 xdj266r x14z9mp xat24cr x1lziwak xexx8yu xyri2b x18d9i69 x1c1uobl x16tdsg8 x1hl2dhg xggy1nq x1fmog5m xu25z0z x140muxe xo1y3bh x87ps6o x1lku1pv x1a2a7pz x9f619 x3nfvp2 xdt5ytf xl56j7k x1n2onr6 xh8yej3"]'
+PASSWORD_INPUT_XPATH = '//*[@class="x1i10hfl xggy1nq xtpw4lu x1tutvks x1s3xk63 x1s07b3s x1a2a7pz xjbqb8w x1v8p93f x1o3jo1z x16stqrj xv5lvn5 x1ejq31n x18oe1m7 x1sy0etr xstzfhl x972fbf x10w94by x1qhh985 x14e42zd x9f619 xzsf02u x1lliihq x15h3p50 x10emqs4 x1vr9vpq x1iyjqo2 x10d0gm4 x1fhayk4 x16wdlz0 x3cjxhe xe9ewy2 x11lt19s xeuugli xlyipyv x1hcrkkg xfvqz1d x12vv892 x1hu168l xttzon8 x1sfh74k x3fqe8q x185fvkj x1p97g3g xmtqnhx x11ig0mb xgmu6d7 x1quw8ve xx0ingd xdj266r xyiysdx x14vy60q x109j2v6 xp5op4 x1y44fgy xdzva22 xs8nzd4 x1fzehxr xha3pab"]'
 
 def click_continue_if_present(driver):
     try:
@@ -31,15 +32,13 @@ def click_continue_if_present(driver):
 
 def handle_password_modal(driver):
     try:
-        pwd_input = driver.find_element(By.XPATH, '//input[@type="password"]')
+        pwd_input = driver.find_element(By.XPATH, PASSWORD_INPUT_XPATH)
         pwd_input.click()
         time.sleep(1)
         pwd_input.send_keys(os.getenv('FB_PASSWORD'))
         time.sleep(1)
-        try:
-            login_btn = driver.find_element(By.XPATH, '//button[@type="submit"]')
-        except:
-            login_btn = driver.find_element(By.XPATH, '//button[contains(text(),"Log in")]')
+        # Usar misma clase del botón Continue para el botón Log in
+        login_btn = driver.find_element(By.XPATH, CONTINUE_BTN_XPATH)
         login_btn.click()
         print('  ✅ Password ingresado en modal')
         time.sleep(7)
