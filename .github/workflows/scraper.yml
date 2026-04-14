@@ -18,12 +18,11 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Instalar Chrome
+      - name: Instalar Chromium
         run: |
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+          sudo apt-get install -y chromium-browser
+          chromium-browser --version
 
       - name: Instalar dependencias Python
         run: pip install -r requirements.txt
@@ -40,6 +39,7 @@ jobs:
           FB_EMAIL: ${{ secrets.FB_EMAIL }}
           FB_PASSWORD: ${{ secrets.FB_PASSWORD }}
           GITHUB_ACTIONS: true
+          CHROME_PATH: /usr/bin/chromium-browser
         run: python scraper.py
 
       - name: Subir screenshots de debug
