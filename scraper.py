@@ -2,6 +2,7 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 from supabase import create_client
 from dotenv import load_dotenv
 import os
@@ -31,13 +32,11 @@ def click_continue_if_present(driver):
         return False
 
 def handle_password_modal(driver):
-    """Detecta y maneja el modal de password SIN WebDriverWait para no bloquear"""
     try:
-        # Buscar sin espera larga
         pwd_inputs = driver.find_elements(By.XPATH, PASSWORD_INPUT_XPATH)
         if not pwd_inputs:
             return False
-        
+
         pwd_input = pwd_inputs[0]
         pwd_input.click()
         time.sleep(1)
@@ -45,27 +44,20 @@ def handle_password_modal(driver):
         time.sleep(1)
         print('  ✅ Password escrito')
 
-        # Buscar botón Log in dentro del modal
-        try:
-            login_btn = driver.find_element(By.XPATH, '//button[contains(text(),"Log in") or contains(text(),"Iniciar")]')
-            login_btn.click()
-        except:
-            # Usar botón por clase como fallback
-            login_btn = driver.find_element(By.XPATH, CONTINUE_BTN_XPATH)
-            login_btn.click()
-
-        print('  ✅ Clic en Log in del modal')
+        # Presionar Enter directamente — más confiable que buscar el botón
+        pwd_input.send_keys(Keys.RETURN)
+        print('  ✅ Enter presionado en password')
         time.sleep(7)
         return True
-    except:
+    except Exception as e:
+        print(f'  ⚠️ Error en modal: {e}')
         return False
 
 def handle_facebook_screens(driver):
-    """Maneja cualquier pantalla intermedia de Facebook en orden correcto"""
-    # 1. Intentar password primero (sin espera larga)
+    # 1. Intentar password primero
     if handle_password_modal(driver):
         time.sleep(3)
-    
+
     # 2. Luego Continue si aparece
     if click_continue_if_present(driver):
         time.sleep(3)
